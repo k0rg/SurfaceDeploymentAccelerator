@@ -395,12 +395,62 @@ Function AddHeaderSpace
 
 
 
+Function Remove-OldTempFiles
+{
+    Param(
+        [string]$TempFolder,
+        [int]$DaysToKeep = 7
+    )
+    
+    # Clean up old temporary files to save disk space
+    If (Test-Path $TempFolder)
+    {
+        Try
+        {
+            $CutoffDate = (Get-Date).AddDays(-$DaysToKeep)
+            $OldFiles = Get-ChildItem -Path $TempFolder -Recurse -File | Where-Object { $_.LastWriteTime -lt $CutoffDate }
+            
+            If ($OldFiles)
+            {
+                Write-Output "Cleaning up temporary files older than $DaysToKeep days..." | Receive-Output -Color Gray -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+                $OldFiles | Remove-Item -Force -ErrorAction SilentlyContinue
+                Write-Output "Cleanup completed" | Receive-Output -Color Gray -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+            }
+        }
+        Catch
+        {
+            Write-Output "Warning: Could not clean up old temporary files: $($_.Exception.Message)" | Receive-Output -Color Yellow -LogLevel 2 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+        }
+    }
+}
+
+
+
 Function CheckIfRunAsAdmin
 {
     If (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] “Administrator”))
     {
         Write-Output “You do not have Administrator rights to run this script!`nPlease re-run this script as an Administrator to continue.” | Receive-Output -Color Red -BGColor Black -LogLevel 3 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
         Break
+    }
+}
+
+
+
+Function Set-SecureDownloadProtocols
+{
+    # Enable TLS 1.2 and TLS 1.3 for secure downloads
+    # This is important for modern HTTPS connections
+    Try
+    {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+        Write-Output "Enabled TLS 1.2 and TLS 1.3 for secure downloads" | Receive-Output -Color Gray -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+    }
+    Catch
+    {
+        # TLS 1.3 might not be available on older systems, fall back to TLS 1.2
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Write-Output "Enabled TLS 1.2 for secure downloads" | Receive-Output -Color Gray -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
     }
 }
 
@@ -481,7 +531,35 @@ Function DownloadFile
         Write-Output "Downloading $FileName to $Path..." | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
         Write-Output ""
         Import-Module BitsTransfer
-        Start-BitsTransfer -Source $ActualURL -Destination "$global:Output" -Priority Foreground -RetryTimeout 60 -RetryInterval 120
+        
+        # Add retry logic for improved reliability
+        $MaxRetries = 3
+        $RetryCount = 0
+        $DownloadSuccess = $false
+        
+        While (-not $DownloadSuccess -and $RetryCount -lt $MaxRetries)
+        {
+            Try
+            {
+                Start-BitsTransfer -Source $ActualURL -Destination "$global:Output" -Priority Foreground -RetryTimeout 120 -RetryInterval 60 -ErrorAction Stop
+                $DownloadSuccess = $true
+                Write-Output "Download completed successfully" | Receive-Output -Color Green -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+            }
+            Catch
+            {
+                $RetryCount++
+                If ($RetryCount -lt $MaxRetries)
+                {
+                    Write-Output "Download failed, attempt $RetryCount of $MaxRetries. Retrying in 10 seconds..." | Receive-Output -Color Yellow -LogLevel 2 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+                    Start-Sleep -Seconds 10
+                }
+                Else
+                {
+                    Write-Output "Download failed after $MaxRetries attempts: $($_.Exception.Message)" | Receive-Output -Color Red -LogLevel 3 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+                    Throw
+                }
+            }
+        }
     }
     Else
     {
@@ -3869,6 +3947,9 @@ $LogFilePath = "$DestinationFolder\Logs"
 $LogFileName = "Log--$OSSKU-$Architecture--$Now.log"
 Start-Log -FilePath $LogFilePath -FileName $LogFileName
 Write-Output "Script start: $Script_Start_Time" | Receive-Output -Color Gray -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+
+# Enable secure download protocols (TLS 1.2/1.3)
+Set-SecureDownloadProtocols
 
 
 If ($Device)
