@@ -202,6 +202,37 @@
                 <Driver name="surfacetimealarmacpifilter.inf"/>
             </Drivers>
         </SurfacePro9>
+        <SurfacePro10>
+            <Drivers>
+                <Driver name="alderlakepch-psystem.inf"/>
+                <Driver name="alderlakepch-psystemlpss.inf"/>
+                <Driver name="gna.inf"/>
+                <Driver name="heci.inf"/>
+                <Driver name="ialpss2_gpio2_adl.inf"/>
+                <Driver name="ialpss2_i2c_adl.inf"/>
+                <Driver name="ialpss2_spi_adl.inf"/>
+                <Driver name="ialpss2_uart2_adl.inf"/>
+                <Driver name="intelthcbase.inf"/>
+                <Driver name="meteorlakepch-ssystem.inf"/>
+                <Driver name="meteorlakepch-ssystemlpss.inf"/>
+                <Driver name="surfaceaccessoryfwupdate.inf"/>
+                <Driver name="surfaceacpiplatformextensiondriver.inf"/>
+                <Driver name="surfacebattery.inf"/>
+                <Driver name="surfacedock2fwupdate.inf"/>
+                <Driver name="surfacedockintegration.inf"/>
+                <Driver name="surfacehidminidriver.inf"/>
+                <Driver name="surfacehotplug.inf"/>
+                <Driver name="surfaceintegrationdriver.inf"/>
+                <Driver name="surfacesarmanager.inf"/>
+                <Driver name="surfaceserialhubdriver.inf"/>
+                <Driver name="surfaceservicenulldriver.inf"/>
+                <Driver name="surfacesmfclient.inf"/>
+                <Driver name="surfacesmfdisplayclient.inf"/>
+                <Driver name="surfacesptclient.inf"/>
+                <Driver name="surfacestoragefwupdateenum.inf"/>
+                <Driver name="surfacetimealarmacpifilter.inf"/>
+            </Drivers>
+        </SurfacePro10>
         <SurfaceLaptop>
             <Drivers>
                 <Driver name="dptf_acpi.inf"/>
@@ -369,6 +400,38 @@
                 <Driver name="surfacetimealarmacpifilter.inf"/>
             </Drivers>
         </SurfaceLaptop5>
+        <SurfaceLaptop6>
+            <Drivers>
+                <Driver name="alderlakepch-psystem.inf"/>
+                <Driver name="alderlakepch-psystemlpss.inf"/>
+                <Driver name="gna.inf"/>
+                <Driver name="heci.inf"/>
+                <Driver name="ialpss2_gpio2_adl.inf"/>
+                <Driver name="ialpss2_i2c_adl.inf"/>
+                <Driver name="ialpss2_spi_adl.inf"/>
+                <Driver name="ialpss2_uart2_adl.inf"/>
+                <Driver name="intelthcbase.inf"/>
+                <Driver name="meteorlakepch-ssystem.inf"/>
+                <Driver name="meteorlakepch-ssystemlpss.inf"/>
+                <Driver name="surfaceaccessoryfwupdate.inf"/>
+                <Driver name="surfaceacpiplatformextensiondriver.inf"/>
+                <Driver name="surfacebattery.inf"/>
+                <Driver name="surfacedock2fwupdate.inf"/>
+                <Driver name="surfacedockintegration.inf"/>
+                <Driver name="surfacehidminidriver.inf"/>
+                <Driver name="surfacehotplug.inf"/>
+                <Driver name="surfaceintegrationdriver.inf"/>
+                <Driver name="surfacesarmanager.inf"/>
+                <Driver name="surfaceserialhubdriver.inf"/>
+                <Driver name="surfaceservicenulldriver.inf"/>
+                <Driver name="surfacesmfclient.inf"/>
+                <Driver name="surfacesmfdisplayclient.inf"/>
+                <Driver name="surfacesptclient.inf"/>
+                <Driver name="surfacestoragefwupdateenum.inf"/>
+                <Driver name="surfacetcondriver.inf"/>
+                <Driver name="surfacetimealarmacpifilter.inf"/>
+            </Drivers>
+        </SurfaceLaptop6>
         <SurfaceBook>
             <Drivers>
                 <Driver name="64gh4463.inf"/>
@@ -528,6 +591,44 @@
                 <Driver name="surfacewakeontouchcontrol.inf"/>
             </Drivers>
         </SurfaceLaptopStudio>
+        <SurfaceLaptopStudio2>
+            <Drivers>
+                <Driver name="alderlakepch-psystem.inf"/>
+                <Driver name="alderlakepch-psystemlpss.inf"/>
+                <Driver name="gna.inf"/>
+                <Driver name="heci.inf"/>
+                <Driver name="ialpss2_gpio2_adl.inf"/>
+                <Driver name="ialpss2_i2c_adl.inf"/>
+                <Driver name="ialpss2_uart2_adl.inf"/>
+                <Driver name="intelthcbase.inf"/>
+                <Driver name="surfaceacpiplatformextensiondriver.inf"/>
+                <Driver name="surfacebattery.inf"/>
+                <Driver name="surfacehidminidriver.inf"/>
+                <Driver name="surfacehotplug.inf"/>
+                <Driver name="surfaceintegrationdriver.inf"/>
+                <Driver name="surfacepenwirelesschargerhotkey.inf"/>
+                <Driver name="surfacesarmanager.inf"/>
+                <Driver name="surfaceserialhubdriver.inf"/>
+                <Driver name="surfacesmfclient.inf"/>
+                <Driver name="surfacesmfdisplayclient.inf"/>
+                <Driver name="surfacesptclient.inf"/>
+                <Driver name="surfacestoragefwupdateenum.inf"/>
+                <Driver name="surfacetimealarmacpifilter.inf"/>
+                <Driver name="surfacewakeontouchcontrol.inf"/>
+            </Drivers>
+        </SurfaceLaptopStudio2>
+        <SurfaceLaptopGo>
+            <Drivers>
+            </Drivers>
+        </SurfaceLaptopGo>
+        <SurfaceLaptopGo2>
+            <Drivers>
+            </Drivers>
+        </SurfaceLaptopGo2>
+        <SurfaceLaptopGo3>
+            <Drivers>
+            </Drivers>
+        </SurfaceLaptopGo3>
         <SurfaceStudio>
             <Drivers>
                 <Driver name="e1d65x64.inf"/>
@@ -581,6 +682,10 @@
             <Drivers>
             </Drivers>
         </SurfaceGo3>
+        <SurfaceGo4>
+            <Drivers>
+            </Drivers>
+        </SurfaceGo4>
         <SurfaceHub2>
             <Drivers>
                 <Driver name="commonsystem.inf"/>

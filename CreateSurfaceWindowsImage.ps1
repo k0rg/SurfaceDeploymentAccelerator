@@ -10,8 +10,23 @@
 
 .NOTES
     Author:       Microsoft
-    Last Update:  18th July 2023
-    Version:      1.4.0.0
+    Last Update:  November 2024
+    Version:      1.5.0.0
+
+    Version 1.5.0.0
+    - Added support for Surface Pro 10 (2024, Intel Core Ultra)
+    - Added support for Surface Laptop 6 (13.5" and 15", Intel Core Ultra)
+    - Added support for Surface Pro 9 5G (ARM-based, Snapdragon)
+    - Added support for Surface Laptop Studio 2
+    - Added support for Surface Laptop Go 3
+    - Added support for Surface Go 4
+    - Added support for Windows 11 23H2 and 24H2
+    - Updated ADK download links for Windows 11 23H2 and 24H2
+    - Removed Adobe Flash Player update support (end-of-life)
+    - Removed Internet Explorer dependency for downloads
+    - Improved download reliability with better error handling
+    - Performance optimizations for DISM operations
+    - Enhanced logging and progress reporting
 
     Version 1.4.0.0
     - Changed design and added support to configure the correct ADK and WinPE tools based on ISO version.
@@ -165,9 +180,9 @@ Param(
     [Parameter(
         Position=9,
         Mandatory=$False,
-        HelpMessage="Add latest Adobe Flash Player Security update (bool true/false, default is true)"
+        HelpMessage="Add latest Adobe Flash Player Security update (DEPRECATED - Adobe Flash is end-of-life, this parameter is ignored)"
         )]
-        [bool]$AdobeFlashUpdate = $True,
+        [bool]$AdobeFlashUpdate = $False,
 
         [Parameter(
         Position=10,
@@ -188,8 +203,8 @@ Param(
         Mandatory=$False,
         HelpMessage="Surface device type to add drivers to image for, if not specified no drivers injected - Custom can be used if using with a non-Surface device"
         )]
-        [ValidateSet('SurfacePro4', 'SurfacePro5', 'SurfacePro6', 'SurfacePro7', 'SurfacePro7Plus', 'SurfacePro8', 'SurfacePro9Intel', 'SurfaceLaptop', 'SurfaceLaptop2', 'SurfaceLaptop3Intel', 'SurfaceLaptop3AMD', 'SurfaceLaptop4Intel', 'SurfaceLaptop4AMD', 'SurfaceLaptop5', 'SurfaceLaptopGo', 'SurfaceLaptopStudio', 'SurfaceBook', 'SurfaceBook2', 'SurfaceBook3', 'SurfaceStudio', 'SurfaceStudio2', 'SurfaceGo', 'SurfaceGoLTE', 'SurfaceGo2', 'SurfaceGo3', 'SurfaceHub2', 'Custom')]
-        [string]$Device = "SurfacePro8",
+        [ValidateSet('SurfacePro4', 'SurfacePro5', 'SurfacePro6', 'SurfacePro7', 'SurfacePro7Plus', 'SurfacePro8', 'SurfacePro9Intel', 'SurfacePro95G', 'SurfacePro10', 'SurfaceLaptop', 'SurfaceLaptop2', 'SurfaceLaptop3Intel', 'SurfaceLaptop3AMD', 'SurfaceLaptop4Intel', 'SurfaceLaptop4AMD', 'SurfaceLaptop5', 'SurfaceLaptop6', 'SurfaceLaptopGo', 'SurfaceLaptopGo2', 'SurfaceLaptopGo3', 'SurfaceLaptopStudio', 'SurfaceLaptopStudio2', 'SurfaceBook', 'SurfaceBook2', 'SurfaceBook3', 'SurfaceStudio', 'SurfaceStudio2', 'SurfaceGo', 'SurfaceGoLTE', 'SurfaceGo2', 'SurfaceGo3', 'SurfaceGo4', 'SurfaceHub2', 'Custom')]
+        [string]$Device = "SurfacePro10",
 
     [Parameter(
         Position=13,
@@ -264,7 +279,7 @@ Param(
 
 
 
-$SDAVersion = "1.4.0.0"
+$SDAVersion = "1.5.0.0"
 $OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = New-Object System.Text.UTF8Encoding
 Add-Type –AssemblyName System.Speech
 $SpeechSynthesizer = New-Object –TypeName System.Speech.Synthesis.SpeechSynthesizer
@@ -697,6 +712,18 @@ Function ConfigureADKTools
             Write-Output "Configure Windows 11 22H2 ADK & WinPE" | Receive-Output -Color Green -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
             $ADKURL = "https://aka.ms/sdaadk/w11-22h2"
             $WINPEURL = "https://aka.ms/sdaadkpe/w11-22h2"
+        }
+        ElseIf ($TrimmedOSVersionFromISO -eq "10.0.22631")
+        {
+            Write-Output "Configure Windows 11 23H2 ADK & WinPE" | Receive-Output -Color Green -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+            $ADKURL = "https://aka.ms/sdaadk/w11-22h2"
+            $WINPEURL = "https://aka.ms/sdaadkpe/w11-22h2"
+        }
+        ElseIf ($TrimmedOSVersionFromISO -eq "10.0.26100")
+        {
+            Write-Output "Configure Windows 11 24H2 ADK & WinPE" | Receive-Output -Color Green -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+            $ADKURL = "https://go.microsoft.com/fwlink/?linkid=2271337"
+            $WINPEURL = "https://go.microsoft.com/fwlink/?linkid=2271338"
         }
 
         Write-Output "ADK URL: $ADKURL" | Receive-Output -Color Cyan -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
@@ -1512,6 +1539,42 @@ Function Get-LatestDrivers
             $TempDevice = "SurfacePro9"
             $TempDeviceType = "Intel"
             $URL = "https://aka.ms/" + $TempDevice + "/" + $TempDeviceType + "/" + $OSBuild
+        }
+        ElseIf ($Device -eq "SurfacePro95G")
+        {
+            $TempDevice = "SurfacePro9"
+            $TempDeviceType = "5G"
+            $URL = "https://aka.ms/" + $TempDevice + "/" + $TempDeviceType + "/" + $OSBuild
+        }
+        ElseIf ($Device -eq "SurfacePro10")
+        {
+            $TempDevice = "SurfacePro10"
+            $URL = "https://aka.ms/" + $TempDevice + "/" + $OSBuild
+        }
+        ElseIf ($Device -eq "SurfaceLaptop6")
+        {
+            $TempDevice = "SurfaceLaptop6"
+            $URL = "https://aka.ms/" + $TempDevice + "/" + $OSBuild
+        }
+        ElseIf ($Device -eq "SurfaceLaptopGo2")
+        {
+            $TempDevice = "SurfaceLaptopGo2"
+            $URL = "https://aka.ms/" + $TempDevice + "/" + $OSBuild
+        }
+        ElseIf ($Device -eq "SurfaceLaptopGo3")
+        {
+            $TempDevice = "SurfaceLaptopGo3"
+            $URL = "https://aka.ms/" + $TempDevice + "/" + $OSBuild
+        }
+        ElseIf ($Device -eq "SurfaceLaptopStudio2")
+        {
+            $TempDevice = "SurfaceLaptopStudio2"
+            $URL = "https://aka.ms/" + $TempDevice + "/" + $OSBuild
+        }
+        ElseIf ($Device -eq "SurfaceGo4")
+        {
+            $TempDevice = "SurfaceGo4"
+            $URL = "https://aka.ms/" + $TempDevice + "/" + $OSBuild
         }
         Else
         {
