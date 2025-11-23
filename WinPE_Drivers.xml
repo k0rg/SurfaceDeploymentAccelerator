@@ -202,6 +202,13 @@
                 <Driver name="surfacetimealarmacpifilter.inf"/>
             </Drivers>
         </SurfacePro9>
+        <SurfacePro95G>
+            <Drivers>
+                <!-- Surface Pro 9 5G (Snapdragon) - ARM-based drivers -->
+                <!-- Note: For ARM devices, drivers are typically provided through Windows Update -->
+                <!-- Custom ARM driver injection may be needed depending on deployment scenario -->
+            </Drivers>
+        </SurfacePro95G>
         <SurfacePro10>
             <Drivers>
                 <Driver name="alderlakepch-psystem.inf"/>

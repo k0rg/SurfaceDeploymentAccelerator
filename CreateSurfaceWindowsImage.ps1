@@ -4273,7 +4273,10 @@ If (!($Automated)) { PAUSE }
 
 If ($AdobeFlashUpdate -eq $True)
 {
-	Get-AdobeFlashUpdates -TempFolder $TempFolder
+    Write-Output "WARNING: Adobe Flash Player is deprecated and end-of-life since December 2020." | Receive-Output -Color Yellow -LogLevel 2 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+    Write-Output "WARNING: Adobe Flash updates are no longer available. This option is ignored." | Receive-Output -Color Yellow -LogLevel 2 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+    Write-Output ""
+    # Adobe Flash is deprecated and no longer supported, skip download
 }
 
 If (!($Automated)) { PAUSE }
