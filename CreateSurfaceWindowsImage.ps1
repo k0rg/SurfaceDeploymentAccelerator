@@ -4173,6 +4173,10 @@ $ImageMountFolder = "$Mount\OSImage"
 $BootImageMountFolder = "$Mount\BootImage"
 $WinREImageMountFolder = "$Mount\WinREImage"
 
+# Clean up old temporary files to save disk space
+Write-Output "Checking for old temporary files to clean up..." | Receive-Output -Color Gray -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+Remove-OldTempFiles -TempFolder $TempFolder -DaysToKeep 7
+
 
 If (Test-Path "$ImageMountFolder")
 {

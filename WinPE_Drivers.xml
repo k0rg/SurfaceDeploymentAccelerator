@@ -619,14 +619,17 @@
         </SurfaceLaptopStudio2>
         <SurfaceLaptopGo>
             <Drivers>
+                <!-- Surface Laptop Go uses generic Windows drivers for WinPE -->
             </Drivers>
         </SurfaceLaptopGo>
         <SurfaceLaptopGo2>
             <Drivers>
+                <!-- Surface Laptop Go 2 uses generic Windows drivers for WinPE -->
             </Drivers>
         </SurfaceLaptopGo2>
         <SurfaceLaptopGo3>
             <Drivers>
+                <!-- Surface Laptop Go 3 uses generic Windows drivers for WinPE -->
             </Drivers>
         </SurfaceLaptopGo3>
         <SurfaceStudio>
@@ -668,22 +671,27 @@
         </SurfaceStudio2>
         <SurfaceGo>
             <Drivers>
+                <!-- Surface Go uses generic Windows drivers for WinPE -->
             </Drivers>
         </SurfaceGo>
         <SurfaceGoLTE>
             <Drivers>
+                <!-- Surface Go LTE uses generic Windows drivers for WinPE -->
             </Drivers>
         </SurfaceGoLTE>
         <SurfaceGo2>
             <Drivers>
+                <!-- Surface Go 2 uses generic Windows drivers for WinPE -->
             </Drivers>
         </SurfaceGo2>
         <SurfaceGo3>
             <Drivers>
+                <!-- Surface Go 3 uses generic Windows drivers for WinPE -->
             </Drivers>
         </SurfaceGo3>
         <SurfaceGo4>
             <Drivers>
+                <!-- Surface Go 4 uses generic Windows drivers for WinPE -->
             </Drivers>
         </SurfaceGo4>
         <SurfaceHub2>
