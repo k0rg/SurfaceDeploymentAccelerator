@@ -1996,6 +1996,7 @@ Function Get-WindowsOSVersionFromISO
         [String]$ISO
     )
 
+    # Default to the latest currently supported Windows setup version so downstream ADK selection has a current fallback if version parsing fails.
     $global:FullOSVersionFromSetupEXE = "10.0.26100.1"
 
     Write-Output "Mounting ISO $ISO..." | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
@@ -2252,7 +2253,7 @@ Function Get-OSWIMFromISO
             If ($global:OSVersionFull)
             {
                 $global:OSVersion = $global:OSVersionFull.Substring(0, $global:OSVersionFull.LastIndexOf('.'))
-                If (($global:OSVersion -like "10.0.18362*") -or ($global:OSVersion -like "10.0.19041*") -or ($global:OSVersion -like "10.0.22621*"))
+                If (($global:OSVersion -like "10.0.18362*") -or ($global:OSVersion -like "10.0.19041*") -or ($global:OSVersion -like "10.0.22621*") -or ($global:OSVersion -like "10.0.22631*") -or ($global:OSVersion -like "10.0.26100*"))
                 {
                     Write-Output "$ImagePath contains image version $global:OSVersion, validating build..." | Receive-Output -Color Yellow -LogLevel 2 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
                     Write-Output ""
@@ -4059,7 +4060,7 @@ If (Test-Path -Path "$WindowsKitsInstall")
     if ((Test-Path -Path $DISMFile) -and (Test-Path -Path $ADKWinPEFile))
     {
         $global:InstalledWinPEVersion = (& $DISMFile /Get-WimInfo /WimFile:$ADKWinPEFile /index:1 | Select-String "Version ").ToString().Split(":")[1].Trim()
-        Write-Output "Check vesion: $WindowsOSVersionMajorMinorBuild and $global:InstalledWinPEVersion" | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+        Write-Output "Check version: $WindowsOSVersionMajorMinorBuild and $global:InstalledWinPEVersion" | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
         If (Test-WinPECompatibility -OSVersion $WindowsOSVersionMajorMinorBuild -WinPEVersion $global:InstalledWinPEVersion)
         {
             $IsValidADKFound = $true
@@ -4096,7 +4097,7 @@ If ($IsValidADKFound -eq $false)
             {
                 $global:InstalledWinPEVersion = (& $DISMFile /Get-WimInfo /WimFile:$ADKWinPEFile /index:1 | Select-String "Version ").ToString().Split(":")[1].Trim()
 
-                Write-Output "Check vesion: $WindowsOSVersionMajorMinorBuild and $global:InstalledWinPEVersion" | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+                Write-Output "Check version: $WindowsOSVersionMajorMinorBuild and $global:InstalledWinPEVersion" | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
                 If (Test-WinPECompatibility -OSVersion $WindowsOSVersionMajorMinorBuild -WinPEVersion $global:InstalledWinPEVersion)
                 {
                     $IsValidADKFound = $true
