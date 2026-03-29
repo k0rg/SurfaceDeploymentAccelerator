@@ -188,7 +188,7 @@ Param(
         Mandatory=$False,
         HelpMessage="Surface device type to add drivers to image for, if not specified no drivers injected - Custom can be used if using with a non-Surface device"
         )]
-        [ValidateSet('SurfacePro4', 'SurfacePro5', 'SurfacePro6', 'SurfacePro7', 'SurfacePro7Plus', 'SurfacePro8', 'SurfacePro9Intel', 'SurfaceLaptop', 'SurfaceLaptop2', 'SurfaceLaptop3Intel', 'SurfaceLaptop3AMD', 'SurfaceLaptop4Intel', 'SurfaceLaptop4AMD', 'SurfaceLaptop5', 'SurfaceLaptopGo', 'SurfaceLaptopStudio', 'SurfaceBook', 'SurfaceBook2', 'SurfaceBook3', 'SurfaceStudio', 'SurfaceStudio2', 'SurfaceGo', 'SurfaceGoLTE', 'SurfaceGo2', 'SurfaceGo3', 'SurfaceHub2', 'Custom')]
+        [ValidateSet('SurfacePro4', 'SurfacePro5', 'SurfacePro6', 'SurfacePro7', 'SurfacePro7Plus', 'SurfacePro8', 'SurfacePro9Intel', 'SurfacePro10', 'SurfacePro11', 'SurfaceLaptop', 'SurfaceLaptop2', 'SurfaceLaptop3Intel', 'SurfaceLaptop3AMD', 'SurfaceLaptop4Intel', 'SurfaceLaptop4AMD', 'SurfaceLaptop5', 'SurfaceLaptop6', 'SurfaceLaptop7', 'SurfaceLaptopGo', 'SurfaceLaptopStudio', 'SurfaceLaptopStudio2', 'SurfaceBook', 'SurfaceBook2', 'SurfaceBook3', 'SurfaceStudio', 'SurfaceStudio2', 'SurfaceGo', 'SurfaceGoLTE', 'SurfaceGo2', 'SurfaceGo3', 'SurfaceGo4', 'SurfaceHub2', 'Custom')]
         [string]$Device = "SurfacePro8",
 
     [Parameter(
@@ -269,6 +269,216 @@ $OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = New-Obj
 Add-Type –AssemblyName System.Speech
 $SpeechSynthesizer = New-Object –TypeName System.Speech.Synthesis.SpeechSynthesizer
 $Windows10Versions = @("10.0.19041", "10.0.19042", "10.0.19043", "10.0.19044", "10.0.19045")
+$Windows11ReleaseIds = @{
+    "10.0.22000" = "21H2"
+    "10.0.22621" = "22H2"
+    "10.0.22631" = "23H2"
+    "10.0.26100" = "24H2"
+}
+
+
+Function Get-ReleaseIdFromOSVersion
+{
+    Param(
+        [Parameter(Mandatory = $True)]
+        [string]$OSVersion
+    )
+
+    If ($Windows10Versions -contains $OSVersion)
+    {
+        $ReleaseId = Switch ($OSVersion)
+        {
+            "10.0.19041" {"2004"}
+            "10.0.19042" {"20H2"}
+            "10.0.19043" {"21H1"}
+            "10.0.19044" {"21H2"}
+            "10.0.19045" {"22H2"}
+        }
+        return $ReleaseId
+    }
+
+    If ($OSVersion -eq "10.0.17763")
+    {
+        return "1809"
+    }
+
+    If ($OSVersion -eq "10.0.18363")
+    {
+        return "1909"
+    }
+
+    return $Windows11ReleaseIds[$OSVersion]
+}
+
+
+Function Get-MinimumSupportedWinPEBuild
+{
+    Param(
+        [Parameter(Mandatory = $True)]
+        [string]$OSVersion
+    )
+
+    If ($Windows10Versions -contains $OSVersion)
+    {
+        return 19041
+    }
+
+    If ($OSVersion -eq "10.0.17763")
+    {
+        return 17763
+    }
+
+    If ($OSVersion -eq "10.0.18363")
+    {
+        return 18363
+    }
+
+    $MinimumSupportedBuild = Switch ($OSVersion)
+    {
+        "10.0.22000" {22000}
+        "10.0.22621" {22621}
+        "10.0.22631" {25398}
+        "10.0.26100" {26100}
+        default {$null}
+    }
+    return $MinimumSupportedBuild
+}
+
+
+Function Test-WinPECompatibility
+{
+    Param(
+        [Parameter(Mandatory = $True)]
+        [string]$OSVersion,
+
+        [Parameter(Mandatory = $True)]
+        [string]$WinPEVersion
+    )
+
+    If ($OSVersion.Trim() -eq $WinPEVersion.Trim())
+    {
+        return $True
+    }
+
+    $MinimumSupportedBuild = Get-MinimumSupportedWinPEBuild -OSVersion $OSVersion.Trim()
+    If ($null -eq $MinimumSupportedBuild)
+    {
+        return $False
+    }
+
+    [int]$WinPEBuild = $WinPEVersion.Trim().Split('.')[2]
+    return ($WinPEBuild -ge $MinimumSupportedBuild)
+}
+
+
+Function Get-ADKDownloadInfo
+{
+    Param(
+        [Parameter(Mandatory = $True)]
+        [string]$OSVersion
+    )
+
+    If ($Windows10Versions -contains $OSVersion)
+    {
+        return @{
+            Label = "Windows 10 2004-22H2"
+            ADKURL = "https://aka.ms/sdaadk/2004"
+            WinPEURL = "https://aka.ms/sdaadkpe/2004"
+        }
+    }
+
+    $ADKDownloadInfo = Switch ($OSVersion)
+    {
+        "10.0.22000" {
+            @{
+                Label = "Windows 11 21H2"
+                ADKURL = "https://aka.ms/sdaadk/W11-21H2"
+                WinPEURL = "https://aka.ms/sdaadkpe/W11-21H2"
+            }
+        }
+        "10.0.22621" {
+            @{
+                Label = "Windows 11 22H2"
+                ADKURL = "https://aka.ms/sdaadk/w11-22h2"
+                WinPEURL = "https://aka.ms/sdaadkpe/w11-22h2"
+            }
+        }
+        "10.0.22631" {
+            @{
+                Label = "Windows 11 23H2"
+                ADKURL = "https://go.microsoft.com/fwlink/?linkid=2243390"
+                WinPEURL = "https://go.microsoft.com/fwlink/?linkid=2243392"
+            }
+        }
+        "10.0.26100" {
+            @{
+                Label = "Windows 11 24H2"
+                ADKURL = "https://go.microsoft.com/fwlink/?linkid=2243390"
+                WinPEURL = "https://go.microsoft.com/fwlink/?linkid=2243392"
+            }
+        }
+        default {
+            $null
+        }
+    }
+    return $ADKDownloadInfo
+}
+
+
+Function Get-WinPEDeviceName
+{
+    Param(
+        [Parameter(Mandatory = $True)]
+        [string]$Device
+    )
+
+    $WinPEDeviceName = Switch ($Device)
+    {
+        "SurfacePro9Intel" {"SurfacePro9"}
+        default {$Device}
+    }
+    return $WinPEDeviceName
+}
+
+
+Function Add-SurfaceDriversToPEImage
+{
+    Param(
+        [Parameter(Mandatory = $True)]
+        [string]$Device,
+
+        [Parameter(Mandatory = $True)]
+        [string]$DeviceDriverPath,
+
+        [Parameter(Mandatory = $True)]
+        [string]$ImageMountFolder
+    )
+
+    $MSIFiles = Get-ChildItem -Path $DeviceDriverPath -Recurse
+    $WinPEDeviceName = Get-WinPEDeviceName -Device $Device
+
+    If ($SurfaceDevices.$WinPEDeviceName)
+    {
+        Write-Output "Adding curated WinPE drivers for $Device to $ImageMountFolder from $DeviceDriverPath..." | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+        $Drivers = $SurfaceDevices.$WinPEDeviceName.Drivers.Driver
+        ForEach ($Driver in $Drivers)
+        {
+            $TempDriverName = $Driver.name
+            ForEach ($MSIFile in $MSIFiles)
+            {
+                If ($MSIFile.Name -eq $TempDriverName)
+                {
+                    Add-WindowsDriver -Path $ImageMountFolder -Driver $MSIFile.FullName
+                }
+            }
+        }
+    }
+    Else
+    {
+        Write-Output "No curated WinPE driver list found for $Device. Injecting all extracted drivers into $ImageMountFolder..." | Receive-Output -Color Yellow -LogLevel 2 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+        Add-WindowsDriver -Path $ImageMountFolder -Driver $DeviceDriverPath -Recurse
+    }
+}
 
 
 Function Start-Log
@@ -675,28 +885,17 @@ Function ConfigureADKTools
         $TrimmedOSVersionFromISO = $OSFullVersion.Substring(0, $OSFullVersion.LastIndexOf('.')).Trim()
         Write-Output ""
 
-        $ADKURL = "https://aka.ms/sdaadk/w11-22h2"
-        $WINPEURL = "https://aka.ms/sdaadkpe/w11-22h2"
+        $ADKURL = "https://go.microsoft.com/fwlink/?linkid=2243390"
+        $WINPEURL = "https://go.microsoft.com/fwlink/?linkid=2243392"
         $ADKArguments = " $ADKPATHARGS /features OptionId.DeploymentTools /quiet"
         $WinPEArguments = " $ADKPATHARGS /features OptionId.WindowsPreinstallationEnvironment /quiet"
+        $ADKDownloadInfo = Get-ADKDownloadInfo -OSVersion $TrimmedOSVersionFromISO
 
-        If ($Windows10Versions -contains $TrimmedOSVersionFromISO)
+        If ($ADKDownloadInfo)
         {
-            Write-Output "Configure Windows 10 ADK & WinPE" | Receive-Output -Color Green -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
-            $ADKURL = "https://aka.ms/sdaadk/2004"
-            $WINPEURL = "https://aka.ms/sdaadkpe/2004"
-        }
-        ElseIf ($TrimmedOSVersionFromISO -eq "10.0.22000")
-        {
-            Write-Output "Configure Windows 11 21H2 ADK & WinPE" | Receive-Output -Color Green -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
-            $ADKURL = "https://aka.ms/sdaadk/W11-21H2"
-            $WINPEURL = "https://aka.ms/sdaadkpe/W11-21H2"
-        }
-        ElseIf ($TrimmedOSVersionFromISO -eq "10.0.22621")
-        {
-            Write-Output "Configure Windows 11 22H2 ADK & WinPE" | Receive-Output -Color Green -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
-            $ADKURL = "https://aka.ms/sdaadk/w11-22h2"
-            $WINPEURL = "https://aka.ms/sdaadkpe/w11-22h2"
+            Write-Output "Configure $($ADKDownloadInfo.Label) ADK & WinPE" | Receive-Output -Color Green -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+            $ADKURL = $ADKDownloadInfo.ADKURL
+            $WINPEURL = $ADKDownloadInfo.WinPEURL
         }
 
         Write-Output "ADK URL: $ADKURL" | Receive-Output -Color Cyan -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
@@ -1797,7 +1996,8 @@ Function Get-WindowsOSVersionFromISO
         [String]$ISO
     )
 
-    $global:FullOSVersionFromSetupEXE = "10.0.22621.1"
+    # Default to the latest currently supported Windows setup version so downstream ADK selection has a current fallback if version parsing fails.
+    $global:FullOSVersionFromSetupEXE = "10.0.26100.1"
 
     Write-Output "Mounting ISO $ISO..." | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
     $ISOPath = (Mount-DiskImage -ImagePath $ISO -StorageType ISO -PassThru | Get-Volume).DriveLetter
@@ -2053,7 +2253,7 @@ Function Get-OSWIMFromISO
             If ($global:OSVersionFull)
             {
                 $global:OSVersion = $global:OSVersionFull.Substring(0, $global:OSVersionFull.LastIndexOf('.'))
-                If (($global:OSVersion -like "10.0.18362*") -or ($global:OSVersion -like "10.0.19041*"))
+                If (($global:OSVersion -like "10.0.18362*") -or ($global:OSVersion -like "10.0.19041*") -or ($global:OSVersion -like "10.0.22621*") -or ($global:OSVersion -like "10.0.22631*") -or ($global:OSVersion -like "10.0.26100*"))
                 {
                     Write-Output "$ImagePath contains image version $global:OSVersion, validating build..." | Receive-Output -Color Yellow -LogLevel 2 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
                     Write-Output ""
@@ -2077,7 +2277,7 @@ Function Get-OSWIMFromISO
                     {
                         $global:OSVersion = "10.0.18363"
                     }
-                    # Specific 20H2/21H1/21H2/22H2 check as it will report as 10.0.19041 still when offline
+                    # Specific enablement-package release checks for Windows 10/11 builds that can report an earlier base version when offline
                     If ($global:ReleaseId -eq "2009")
                     {
                         If ($global:CurrentBuild -eq "19042")
@@ -2105,17 +2305,21 @@ Function Get-OSWIMFromISO
                             $global:OSVersion = "10.0.22621"
                             $global:ReleaseID = "22H2"
                         }
+                        ElseIf ($global:CurrentBuild -eq "22631")
+                        {
+                            $global:OSVersion = "10.0.22631"
+                            $global:ReleaseID = "23H2"
+                        }
+                        ElseIf ($global:CurrentBuild -eq "26100")
+                        {
+                            $global:OSVersion = "10.0.26100"
+                            $global:ReleaseID = "24H2"
+                        }
                     }
                 }
                 Else
                 {
-                    $global:ReleaseId = Switch ($global:OSVersion)
-                    {
-                        10.0.17763 {"1809"} # Windows 10 RS5
-                        10.0.19041 {"2004"} # Windows 10 20H1
-                        10.0.22000 {"21H2"} # Windows 11 21H2
-                        10.0.22621 {"22H2"} # Windows 11 22H2
-                    }
+                    $global:ReleaseId = Get-ReleaseIdFromOSVersion -OSVersion $global:OSVersion
                 }
 
                 If (!($global:ReleaseID))
@@ -3176,24 +3380,7 @@ Function Update-Win10WIM
 
         If ($Device)
         {
-            $MSIFiles = Get-ChildItem -Path $DeviceDriverPath -Recurse
-            If ($SurfaceDevices.$Device)
-            {
-                # Add system-level drivers to WIM
-                Write-Output "Adding Driver updates for $Device to $WinREImageMountFolder from $DeviceDriverPath..." | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
-                $Drivers = $SurfaceDevices.$Device.Drivers.Driver
-                ForEach ($Driver in $Drivers)
-                {
-                    $TempDriverName = $Driver.name
-                    ForEach ($MSIFile in $MSIFiles)
-                    {
-                        If ($MSIFile.Name -eq $TempDriverName)
-                        {
-                            Add-WindowsDriver -Path $WinREImageMountFolder -Driver $MSIFile.FullName
-                        }
-                    }
-                }
-            }
+            Add-SurfaceDriversToPEImage -Device $Device -DeviceDriverPath $DeviceDriverPath -ImageMountFolder $WinREImageMountFolder
             Write-Output ""
             Write-Output ""
         }
@@ -3433,24 +3620,7 @@ Function Update-Win10WIM
 
         If ($Device)
         {
-            $MSIFiles = Get-ChildItem -Path $DeviceDriverPath -Recurse
-            If ($SurfaceDevices.$Device)
-            {
-                # Add system-level drivers to WIM
-                Write-Output "Adding Driver updates for $Device to $BootImageMountFolder from $DeviceDriverPath..." | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
-                $Drivers = $SurfaceDevices.$Device.Drivers.Driver
-                ForEach ($Driver in $Drivers)
-                {
-                    $TempDriverName = $Driver.name
-                    ForEach ($MSIFile in $MSIFiles)
-                    {
-                        If ($MSIFile.Name -eq $TempDriverName)
-                        {
-                            Add-WindowsDriver -Path $BootImageMountFolder -Driver $MSIFile.FullName
-                        }
-                    }
-                }
-            }
+            Add-SurfaceDriversToPEImage -Device $Device -DeviceDriverPath $DeviceDriverPath -ImageMountFolder $BootImageMountFolder
             Write-Output ""
             Write-Output ""
         }
@@ -3890,8 +4060,8 @@ If (Test-Path -Path "$WindowsKitsInstall")
     if ((Test-Path -Path $DISMFile) -and (Test-Path -Path $ADKWinPEFile))
     {
         $global:InstalledWinPEVersion = (& $DISMFile /Get-WimInfo /WimFile:$ADKWinPEFile /index:1 | Select-String "Version ").ToString().Split(":")[1].Trim()
-        Write-Output "Check vesion: $WindowsOSVersionMajorMinorBuild and $global:InstalledWinPEVersion" | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
-        If ($WindowsOSVersionMajorMinorBuild -eq $global:InstalledWinPEVersion)
+        Write-Output "Check version: $WindowsOSVersionMajorMinorBuild and $global:InstalledWinPEVersion" | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+        If (Test-WinPECompatibility -OSVersion $WindowsOSVersionMajorMinorBuild -WinPEVersion $global:InstalledWinPEVersion)
         {
             $IsValidADKFound = $true
             $global:InstalledADKRoot = $WindowsKitsInstall
@@ -3927,8 +4097,8 @@ If ($IsValidADKFound -eq $false)
             {
                 $global:InstalledWinPEVersion = (& $DISMFile /Get-WimInfo /WimFile:$ADKWinPEFile /index:1 | Select-String "Version ").ToString().Split(":")[1].Trim()
 
-                Write-Output "Check vesion: $WindowsOSVersionMajorMinorBuild and $global:InstalledWinPEVersion" | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
-                If ($WindowsOSVersionMajorMinorBuild -eq $global:InstalledWinPEVersion)
+                Write-Output "Check version: $WindowsOSVersionMajorMinorBuild and $global:InstalledWinPEVersion" | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+                If (Test-WinPECompatibility -OSVersion $WindowsOSVersionMajorMinorBuild -WinPEVersion $global:InstalledWinPEVersion)
                 {
                     $IsValidADKFound = $true
                     $global:InstalledADKRoot = $InstalledADKRootFromRegistry
@@ -3999,7 +4169,7 @@ If (!($Automated))
     PAUSE
 }
 
-# Pull Windows 10 version and SKU from ISO provided by script param, returns OSVersion and WinPEVersion variable as well
+# Pull Windows version and SKU from ISO provided by script param, returns OSVersion and WinPEVersion variable as well
 Get-OSWIMFromISO -ISO $ISO -OSSKU $OSSKU -DestinationFolder $DestinationFolder -Architecture $Architecture -WindowsKitsInstall $WindowsKitsInstall -ScratchMountFolder $ScratchMountFolder
 Start-Sleep 2
 Write-Output "Windows Version:  $global:WindowsVersion" | Receive-Output -Color White -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
@@ -4009,17 +4179,14 @@ Write-Output ""
 Start-Sleep 5
 
 
-If ($global:OSVersion.Trim() -ne $global:WinPEVersion.Trim())
+If (!(Test-WinPECompatibility -OSVersion $global:OSVersion.Trim() -WinPEVersion $global:WinPEVersion.Trim()))
 {
-    If (($global:WinPEVersion.Trim() -eq "10.0.19041") -and ($Windows10Versions -contains $global:OSVersion.Trim()))
-    {
-        Write-Output "WinPE ver: $global:WinPEVersion supports OS ver: $global:OSVersion, Hence proceed..." | Receive-Output -Color Yellow -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
-    }
-    Else
-    {
-        Write-Output "OSVersion: $global:OSVersion and WinPEVersion: $global:WinPEVersion are not matching" | Receive-Output -Color Red -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
-        Exit
-    }
+    Write-Output "OSVersion: $global:OSVersion and WinPEVersion: $global:WinPEVersion are not compatible" | Receive-Output -Color Red -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
+    Exit
+}
+ElseIf ($global:OSVersion.Trim() -ne $global:WinPEVersion.Trim())
+{
+    Write-Output "WinPE ver: $global:WinPEVersion supports OS ver: $global:OSVersion, Hence proceed..." | Receive-Output -Color Yellow -LogLevel 1 -LineNumber "$($Invocation.MyCommand.Name):$( & {$MyInvocation.ScriptLineNumber})"
 }
 
 # Variables needed after Get-OSWIMFromISO finishes, passed to Update-Win10WIM
